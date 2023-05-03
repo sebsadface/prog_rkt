@@ -1,0 +1,13 @@
+*.pdf
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.gz
+node_modules/*
+!node_modules/coZ
+.vscode
+dist
+*.jpg
+*.jpeg
