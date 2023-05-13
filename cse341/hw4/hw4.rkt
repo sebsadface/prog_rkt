@@ -64,6 +64,9 @@
 (define (vector-assoc v vec)
   (letrec ([f (λ (v vec n)
                 (cond [(= n (vector-length vec)) #f]
-                      [(= v (vector-ref vec n) (vector-ref vec n))]
+                      [(pair? (vector-ref vec n))
+                              (if (= v (car (vector-ref vec n)))
+                                  (vector-ref vec n)
+                                  (f v vec (+ n 1)))]
                       [#t (f v vec (+ n 1))]))])
-    (λ () (f v vec 0))))
+    (f v vec 0)))
