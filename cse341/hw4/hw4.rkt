@@ -65,8 +65,72 @@
   (letrec ([f (λ (v vec n)
                 (cond [(= n (vector-length vec)) #f]
                       [(pair? (vector-ref vec n))
-                              (if (= v (car (vector-ref vec n)))
+                              (if (equal? v (car (vector-ref vec n)))
                                   (vector-ref vec n)
                                   (f v vec (+ n 1)))]
                       [#t (f v vec (+ n 1))]))])
     (f v vec 0)))
+
+;;#10
+(define (caching-assoc xs n)
+  (letrec ([cache (make-vector n #f)]
+           [next-pos 0]
+           [f (λ (v)
+                (let ([ans (vector-assoc v cache)])
+                  (if ans
+                      ans
+                      (let ([new-ans (assoc v xs)])
+                        (if new-ans
+                            (begin
+                              (vector-set! cache next-pos new-ans)
+                              (set! next-pos (if (>= (+ next-pos 1) n) 0 (+ next-pos 1)))
+                              new-ans) new-ans)))))])
+    f))
+
+;;#11
+(define-syntax while-greater
+  (syntax-rules (do)
+    [(while-greater e1 do e2)
+     (let ([x e1])
+      (letrec ([f (λ (x y)
+          (if (> y x)
+              (f x e2)
+              #t))])
+      (f e1 e2)))]))
+        
+;;#12
+(define (cycle-lists-challenge xs ys)
+  (letrec ([f (λ (xs ys)
+                (cons (cons (car xs) (car ys))
+                      (λ () (f (if (null? (cdr xs)) xs (cdr xs))
+                                (if (null? (cdr ys)) ys (cdr ys))))))])
+    (λ () (f xs ys))))
+
+;;#13
+(define (caching-assoc-lru xs n)
+  (letrec ([cache (make-vector n #f)]
+           [timestamps (make-vector n 0)]
+           [current-time 0]
+           [f (λ (v)
+                (let ([ans (vector-assoc v cache)])
+                  (if ans
+                      (begin
+                        (vector-set! timestamps (vector-assoc ans cache) current-time)
+                        (set! current-time (+ current-time 1))
+                        ans)
+                      (let ([new-ans (assoc v xs)])
+                        (if new-ans
+                            (begin
+                              (let ([least-recently-used (let loop ([i 0] [min-i 0] [min-time (vector-ref timestamps 0)])
+                                                           (if (< i n)
+                                                               (let ([time (vector-ref timestamps i)])
+                                                                 (if (< time min-time)
+                                                                     (loop (+ i 1) i time)
+                                                                     (loop (+ i 1) min-i min-time)))
+                                                               min-i))])
+                                (vector-set! cache least-recently-used new-ans)
+                                (vector-set! timestamps least-recently-used current-time))
+                              (set! current-time (+ current-time 1))
+                              new-ans)
+                            new-ans)))))])
+    (λ (v) (f v))))
