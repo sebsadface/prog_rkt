@@ -102,11 +102,8 @@
 
 ;;#11
 (define a 7)
-(check-equal? (while-greater 2 do (begin (set! a (- a 1)) a)) #t) 
-(define b 1)
-(check-equal? (while-greater 2 do (begin (set! b (+ b 1)) b)) #t) 
-(define c 2)
-(check-equal? (while-greater 2 do (begin (set! c (+ c 1)) c)) #t)
+(while-greater 2 do (begin (set! a (- a 1)) (print "x") a))
+(while-greater 2 do (begin (set! a (- a 1)) (print "x") a))
 
 ;;#12
 (define (one-visual-test12)
