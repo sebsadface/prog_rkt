@@ -1,4 +1,4 @@
- ;; CSE341, Programming Languages, Homework 5
+;; CSE341, Programming Languages, Homework 5
 
 #lang racket
 (provide (all-defined-out)) ;; so we can put tests in a second file
@@ -22,14 +22,10 @@
 (struct closure (env fun) #:transparent) 
 
 ;; Problem 1
-(define (racketlist->mupllist lst)
-  (cond [(null? lst) (munit)]
-        [#t (apair (car lst) (racketlist->mupllist (cdr lst)))]))
+
+;; CHANGE (put your solutions here)
 
 ;; Problem 2
-(define (mupllist->racketlist mlst)
-  (cond [(munit? mlst) null]
-        [#t (list (first mlst) (second mlst))]))
 
 ;; lookup a variable in an environment
 ;; Do NOT change this function
@@ -54,51 +50,6 @@
                        (int-num v2)))
                (error "MUPL addition applied to non-number")))]
         ;; CHANGE add more cases here
-        [(isgreater? e)
-         (let ([v1 (eval-under-env (isgreater-e1 e) env)]
-               [v2 (eval-under-env (isgreater-e2 e) env)])
-           (if (and (int? v1)
-                    (int? v2))
-               (if (> (int-num v1) (int-num v2)) (int 1) (int 0))
-               (int 0)))]
-        [(ifnz? e)
-         (let ([v1 (eval-under-env (ifnz-e1 e) env)])
-           (if (int? v1)
-               (if (not (= 0 (int-num v1)))
-                   (eval-under-env (ifnz-e2 e) env)
-                   (eval-under-env (ifnz-e3 e) env))
-               (error "MUPL ifnz is given a non-number predicate")))]
-        [(fun? e) (closure env e)]
-        [(mlet? e)
-         (let ([newenv (cons (cons (mlet-var e) (eval-under-env (mlet-e e) env)) env)])
-           (eval-under-env (mlet-body e) newenv))]
-        [(call? e)
-         (let ([cls (eval-under-env (call-funexp e))]
-               [para (eval-under-env (call-actual e))])
-           (if (closure? cls)
-               (let ([newenv
-                      (if (equal? null (fun-nameopt (closure-fun cls)))
-                          (cons (cons (fun-formal (closure-fun cls)) para) env)
-                          (cons (cons (fun-formal (closure-fun cls)))
-                                (cons (cons (fun-nameopt (closure-fun cls)) cls) env)))])
-                 (eval-under-env (fun-body (closure-fun cls)) newenv))
-               (error "MUPL call is given a non-closure function expression")))]
-        [(apair? e) (apair (eval-under-env (apair-e1 e) env) (eval-under-env (apair-e2 e) env))]
-        [(first? e)
-         (let ([pr (eval-under-env (first-e e) env)])
-           (if (apair? pr)
-               (apair-e1 pr)
-               (error "MUPL first is given a non-pair argument")))]
-        [(second? e)
-         (let ([pr (eval-under-env (second-e e) env)])
-           (if (apair? pr)
-               (apair-e2 pr)
-               (error "MUPL second is given a non-pair argument")))]
-        [(ismunit? e)
-         (if (munit? (eval-under-env (ismunit-e e) env))
-             (int 1)
-             (int 0))]
-           
         [#t (error (format "bad MUPL expression: ~v" e))]))
 
 ;; Do NOT change
