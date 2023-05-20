@@ -107,11 +107,20 @@
         
 ;; Problem 3
 
-(define (ifmunit e1 e2 e3) "CHANGE")
+(define (ifmunit e1 e2 e3) (if (munit? e1) e2 e3))
 
-(define (mlet* bs e2) "CHANGE")
+(define (mlet* bs e2)
+  (cond [(munit? bs) (e2)]
+        [#t (mlet (first (first bs)) (second (first bs)) (mlet* (second bs) e2))]))
 
-(define (ifeq e1 e2 e3 e4) "CHANGE")
+(define (ifeq e1 e2 e3 e4)
+  (mlet _x e1
+        (mlet _y e2
+              (ifnz (isgreater _x _y)
+                    e4
+                    (ifnz (isgreater _y _x)
+                          e4
+                          e3)))))
 
 ;; Problem 4
 
