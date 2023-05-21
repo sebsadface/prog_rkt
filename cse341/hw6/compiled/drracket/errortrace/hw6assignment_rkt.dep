@@ -1,0 +1,1 @@
+("8.8" tarm64osx ("fd1e9cb2f7ca52d6ec235bff910c9d7d619894ea" . "3888708e80c074470353e8ee6f62245213a1572c") #"/Users/seb/GitRepos/prog_rkt/cse341/hw6/hw6provided.rkt" (collects #"drracket" #"private" #"drracket-errortrace-key.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt"))
