@@ -29,7 +29,7 @@
 ;; Problem 2
 (define (mupllist->racketlist mlst)
   (cond [(munit? mlst) null]
-        [#t (list (first mlst) (second mlst))]))
+        [#t (cons (apair-e1 mlst) (mupllist->racketlist (apair-e2 mlst)))]))
 
 ;; lookup a variable in an environment
 ;; Do NOT change this function
@@ -54,13 +54,14 @@
                        (int-num v2)))
                (error "MUPL addition applied to non-number")))]
         ;; CHANGE add more cases here
+        [(int? e) (int (int-num e))]
         [(isgreater? e)
          (let ([v1 (eval-under-env (isgreater-e1 e) env)]
                [v2 (eval-under-env (isgreater-e2 e) env)])
            (if (and (int? v1)
                     (int? v2))
                (if (> (int-num v1) (int-num v2)) (int 1) (int 0))
-               (int 0)))]
+               (error "MUPL isgreater is given non-number argument(s)")))]
         [(ifnz? e)
          (let ([v1 (eval-under-env (ifnz-e1 e) env)])
            (if (int? v1)
@@ -73,14 +74,13 @@
          (let ([newenv (cons (cons (mlet-var e) (eval-under-env (mlet-e e) env)) env)])
            (eval-under-env (mlet-body e) newenv))]
         [(call? e)
-         (let ([cls (eval-under-env (call-funexp e))]
-               [para (eval-under-env (call-actual e))])
+         (let ([cls (eval-under-env (call-funexp e) env)]
+               [para (eval-under-env (call-actual e) env)])
            (if (closure? cls)
-               (let ([newenv
-                      (if (equal? null (fun-nameopt (closure-fun cls)))
-                          (cons (cons (fun-formal (closure-fun cls)) para) env)
-                          (cons (cons (fun-formal (closure-fun cls)))
-                                (cons (cons (fun-nameopt (closure-fun cls)) cls) env)))])
+               (let* ([fun-name (fun-nameopt (closure-fun cls))]
+                      [lexenv (closure-env cls)]
+                     [para-name (fun-formal (closure-fun cls))]
+                     [newenv (cons (cons para-name para) (if (null? fun-name) lexenv (cons (cons fun-name cls) lexenv)))])              
                  (eval-under-env (fun-body (closure-fun cls)) newenv))
                (error "MUPL call is given a non-closure function expression")))]
         [(apair? e) (apair (eval-under-env (apair-e1 e) env) (eval-under-env (apair-e2 e) env))]
@@ -98,7 +98,7 @@
          (if (munit? (eval-under-env (ismunit-e e) env))
              (int 1)
              (int 0))]
-           
+        [(munit? e) (munit)]  
         [#t (error (format "bad MUPL expression: ~v" e))]))
 
 ;; Do NOT change
@@ -107,28 +107,40 @@
         
 ;; Problem 3
 
-(define (ifmunit e1 e2 e3) (if (munit? e1) e2 e3))
+(define (ifmunit e1 e2 e3) (ifnz (ismunit e1) e2 e3))
 
 (define (mlet* bs e2)
-  (cond [(munit? bs) (e2)]
-        [#t (mlet (first (first bs)) (second (first bs)) (mlet* (second bs) e2))]))
+  (if (null? bs)
+        e2
+          (mlet (car (car bs))
+              (cdr (car bs))
+              (mlet* (cdr bs) e2))))
 
 (define (ifeq e1 e2 e3 e4)
-  (mlet _x e1
-        (mlet _y e2
-              (ifnz (isgreater _x _y)
+  (mlet "_x" e1
+        (mlet "_y" e2
+              (ifnz (isgreater (var "_x") (var "_y"))
                     e4
-                    (ifnz (isgreater _y _x)
+                    (ifnz (isgreater (var "_y") (var "_x"))
                           e4
                           e3)))))
 
 ;; Problem 4
 
-(define mupl-filter "CHANGE")
+(define mupl-filter
+  (fun "outer" "op"
+       (mlet "op" (var "op")
+             (fun "inner" "lst"
+                  (ifmunit (var "lst")
+                           (munit)
+                           (ifeq (int 1) (call (var "op") (first (var "lst")))
+                                  (apair (first (var "lst")) (call (var "inner") (second (var "lst"))))
+                                  (call (var "inner") (second (var "lst")))))))))
 
 (define mupl-all-gt
-  (mlet "filter" mupl-filter
-        "CHANGE (notice filter is now in MUPL scope)"))
+  (fun "ret" "i"
+       (mlet "filter" mupl-filter
+             (call (var "filter") (fun "gt" "b" (isgreater (var "b") (var "i")))))))
 
 ;; Challenge Problem
 
