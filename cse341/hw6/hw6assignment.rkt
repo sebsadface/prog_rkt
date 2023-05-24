@@ -6,6 +6,7 @@
 (require "hw6provided.rkt")
 (require racket/random) 
 (provide my-tetris%)
+(provide my-board%)
 ; Uncomment this line if you do the challenge problem
 ;(provide my-tetris-challenge%)
 
