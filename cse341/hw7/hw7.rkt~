@@ -67,9 +67,7 @@
                                                      (send seg get-y1)
                                                      (send seg get-x2)
                                                      (send seg get-y2)))
-            intersect-with-segment-as-line-result seg))
-
-    (define/public (eval-prog env) this)))
+            intersect-with-segment-as-line-result seg))))
 
 ; do *not* change the no-points% definition *except* to add methods if needed
 ; to implement eval-prog and preprocess-prog.
@@ -103,24 +101,7 @@
     (define/public (get-x) _x)
     (define/public (get-y) _y)
 
-    (define/public (shift dx dy) (new point% [x (+ _x dx)][y (+ _y dy)]))
-    (define/public (intersect other)
-      (send other intersect-point this))
-    (define/public (intersect-point p)
-      (if (float-close-point _x (send p get-x) _y (send p get-y))
-          this
-          (new no-points%)))
-    (define/public (intersect-line line)
-      (if (float-close _y (+ (send line get-b) (* (send line get-m) _x)))
-          this
-          (new no-points%)))
-    (define/public (intersect-vertical-line vline)
-      (if (float-close _x (send vline get-x))
-          this
-          (new no-points%)))
-    (define/public (intersect-with-segment-as-line-result seg)
-      (send seg intersect-point this))
-    (define/public (preprocess-prog) this)))
+    ))
 
 ; *add* methods to line% class -- do *not* change given code and do not override any methods
 (define line%
@@ -132,23 +113,7 @@
     (define/public (get-m) _m)
     (define/public (get-b) _b)
 
-    (define/public (shift dx dy) (new line% [m _m][b (- (+ _b dy) (* _m dx))]))
-    (define/public (intersect other)
-      (send other intersect-line this))
-    (define/public (intersect-point p)
-      (send p intersect-line this))
-    (define/public (intersect-line line)
-      (if (float-close _m (send line get-m))
-          (if (float-close _b (send line get-b))
-              this
-              (new no-points%))
-          (let ([nx (/ (- (send line get-b) _b) (- _m (send line get-m)))])
-            (new point% [x nx][y (+ (* _m nx) _b)]))))
-    (define/public (intersect-vertical-line vline)
-      (new point% [x (send vline get-x)][y (+ (* _m (send vline get-x)) _b)]))
-    (define/public (intersect-with-segment-as-line-result seg)
-      (send seg intersect-line this))
-    (define/public (preprocess-prog) this)))
+    ))
 
 ; *add* methods to vertical-line% class -- do *not* change given code and do not override any methods
 (define vertical-line%
@@ -158,20 +123,7 @@
     (define _x x)
     (define/public (get-x) _x)
 
-    (define/public (shift dx dy) (new vertical-line% [x (+ _x dx)]))
-    (define/public (intersect other)
-      (send other intersect-vertical-line this))
-    (define/public (intersect-point p)
-      (send p intersect-vertical-line this))
-    (define/public (intersect-line line)
-      (send line intersect-vertical-line this))
-    (define/public (intersect-vertical-line vline)
-      (if (float-close _x (send vline get-x))
-          this
-          (new no-points%)))
-    (define/public (intersect-with-segment-as-line-result seg)
-      (send seg intersect-vertical-line this))
-    (define/public (preprocess-prog) this)))
+    ))
 
 ; *add* methods to line-segment% class -- do *not* change given code and do not override any methods
 ; Note: This is the most difficult class, particularly:
@@ -193,59 +145,7 @@
     (define/public (get-x2) _x2)
     (define/public (get-y2) _y2)
 
-    (define/public (shift dx dy)
-      (new line-segment% [x1 (+ _x1 dx)][y1 (+ _y1 dy)][x2 (+ _x2 dx)][y2 (+ _y2 dy)]))
-    (define/public (intersect other)
-      (send other intersect-with-segment-as-line-result this))
-    (define/public (intersect-point p)
-      (let ([inbetween (λ (v end1 end2)
-             (or (and (<= (- end1 epsilon) v) (<= v (+ end2 epsilon)))
-                 (and (<= (- end2 epsilon) v) (<= v (+ end1 epsilon)))))])
-        (if (and (inbetween (send p get-x) _x2 _x1) (inbetween (send p get-y) _y2 _y1))
-            p
-            (new no-points%))))
-    (define/public (intersect-line line) this)
-    (define/public (intersect-vertical-line vline) this)
-    (define/public (intersect-with-segment-as-line-result seg)
-      (if (float-close _x1 _x2)
-          (let ([segpair (if (< _y2 (send seg get-y2)) (cons this seg) (cons seg this))])
-            (if (float-close (send (car segpair) get-y1) (send (cdr segpair) get-y2))
-                (new point% [x (send (car segpair) get-x1)][y (send (car segpair) get-y1)])
-                (if (< (send (car segpair) get-y1) (send (cdr segpair) get-y2))
-                    (new no-points%)
-                    (if (> (send (car segpair) get-y1) (send (cdr segpair) get-y1))
-                        (new line-segment%
-                             [x1 (send (cdr segpair) get-x1)]
-                             [y1 (send (cdr segpair) get-y1)]
-                             [x2 (send (cdr segpair) get-x2)]
-                             [y2 (send (cdr segpair) get-y2)])
-                        (new line-segment%
-                             [x1 (send (car segpair) get-x1)]
-                             [y1 (send (car segpair) get-y1)]
-                             [x2 (send (cdr segpair) get-x2)]
-                             [y2 (send (cdr segpair) get-y2)])))))
-          (let ([segpair (if (< _x2 (send seg get-x2)) (cons this seg) (cons seg this))])
-            (if (float-close (send (car segpair) get-x1) (send (cdr segpair) get-x2))
-                (new point% [x (send (car segpair) get-x1)][y (send (car segpair) get-y1)])
-                (if (< (send (car segpair) get-x1) (send (cdr segpair) get-x2))
-                    (new no-points%)
-                    (if (> (send (car segpair) get-x1) (send (cdr segpair) get-x1))
-                        (new line-segment%
-                             [x1 (send (cdr segpair) get-x1)]
-                             [y1 (send (cdr segpair) get-y1)]
-                             [x2 (send (cdr segpair) get-x2)]
-                             [y2 (send (cdr segpair) get-y2)])
-                        (new line-segment%
-                             [x1 (send (car segpair) get-x1)]
-                             [y1 (send (car segpair) get-y1)]
-                             [x2 (send (cdr segpair) get-x2)]
-                             [y2 (send (cdr segpair) get-y2)])))))))
-    (define/public (preprocess-prog)
-      (if (and (float-close _x1 _x2) (float-close _y1 _y2))
-          (new point% [x _x1][y _y1])
-          (if (or (and (float-close _x1 _x2) (> _y2 _y1)) (> _x2 _x1))
-              (new line-segment% [x1 _x2][y1 _y2][x2 _x1][y2 _y1])
-              this)))))
+    ))
 
 ; Note: there is no need for getter methods for the non-value classes
 
@@ -259,10 +159,7 @@
     (define _e1 e1)
     (define _e2 e2)
 
-    (define/public (eval-prog env)
-      (send (send _e1 eval-prog env) intersect (send _e2 eval-prog env)))
-    (define/public (preprocess-prog)
-      (new intersect% [e1 (send _e1 preprocess-prog)][e2 (send _e2 preprocess-prog)]))))
+    ))
 
 (define let%
   (class geometry-expression%
@@ -272,10 +169,7 @@
     (define _e1 e1)
     (define _e2 e2)
 
-    (define/public (eval-prog env)
-      (send _e2 eval-prog (cons (cons _s _e1) env)))
-    (define/public (preprocess-prog)
-      (new let% [s _s][e1 (send _e1 preprocess-prog)][e2 (send _e2 preprocess-prog)]))))
+    ))
 
 (define var%
   (class geometry-expression%
@@ -285,7 +179,8 @@
     (define/public (eval-prog env)
       (let ([pr (assoc _s env)])
         (if pr (cdr pr) (error "var not found" _s))))
-    (define/public (preprocess-prog) this)))
+
+    ))
 
 (define shift%
   (class geometry-expression%
@@ -295,7 +190,4 @@
     (define _dy dy)
     (define _e e)
 
-    (define/public (eval-prog env)
-      (send (send _e eval-prog env) shift _dx _dy))
-    (define/public (preprocess-prog)
-      (new shift% [dx _dx][dy _dy][e (send _e preprocess-prog)]))))
+    ))
