@@ -1,2 +1,2 @@
-# prog_rkt
+# rkt
 Racket projects
